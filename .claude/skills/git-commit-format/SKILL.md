@@ -1,6 +1,6 @@
 ---
 name: git-commit-format
-description: Enforce commit subject format: type(scope): summary (#issue).
+description: "Enforce commit subject format: type(scope): summary (#issue)."
 ---
 
 # Format git commit messages
