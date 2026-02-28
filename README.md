@@ -1,6 +1,8 @@
 # skills
 
-Personal [Claude Code](https://code.claude.com) skills library — version-controlled and auto-synced to `~/.claude`.
+These are mine, but you can have them.
+
+Auto-synced to `~/.claude` on commit/checkout/pull.
 
 ## Setup
 
@@ -10,20 +12,22 @@ cd ~/Source/skills
 ./install-hooks.sh   # auto-sync on every commit/pull/branch switch
 ```
 
-After the initial sync, skills are available in every project you open in Claude Code.
-
 ## Skills
 
 | Skill | Description |
 |---|---|
+| `/adr-writer` | Draft Architecture Decision Records (ADRs) from project context |
+| `/algorithm-visualization-web` | Build a lightweight web visualization for an algorithm with playback controls |
+| `/architecture-diagram-generator` | Generate architecture diagrams using Mermaid (optional C4-style) |
+| `/changelog-from-commits` | Generate changelog sections from commit history |
+| `/docs-sync` | Check docs against repo behavior and produce an outdated-docs report |
+| `/git-commit-format` | Enforce commit subject format: `type(scope): summary (#issue)` |
 | `/live-monitor` | Poll a log file for new lines while a named process is running |
+| `/mermaid-dependency-graph` | Generate Mermaid dependency graphs for modules/services/systems |
+| `/mermaid-request-flow-chart` | Generate Mermaid request flow charts |
+| `/mermaid-sequence-request-chart` | Generate Mermaid sequence diagrams for request lifecycles |
 | `/run-cadre` | Run cadre against a config file (defaults to `~/.cadre`) |
 
-## How it works
-
-- All skills live in `.claude/skills/<name>/SKILL.md`
-- `install-hooks.sh` installs git hooks (`post-commit`, `post-merge`, `post-checkout`) that sync `.claude/` → `~/.claude/` automatically
-- Skills in `~/.claude/skills/` are available in **all** Claude Code projects, not just this repo
 
 ## Adding a skill
 
@@ -36,19 +40,6 @@ description: What it does and when to use it.
 ---
 
 Instructions for Claude go here.
-EOF
-git add .claude/skills/my-skill
-git commit -m "Add my-skill"   # syncs automatically via git hook
-```
-
-## Files
-
-```
-.claude/
-  skills/
-    live-monitor/SKILL.md
-    run-cadre/SKILL.md
-install-hooks.sh    # run once after cloning
 ```
 
 ## Related
