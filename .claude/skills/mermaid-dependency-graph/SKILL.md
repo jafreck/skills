@@ -1,4 +1,3 @@
-````skill
 ---
 name: mermaid-dependency-graph
 description: Generate Mermaid dependency graphs for services, packages, modules, and external systems.
@@ -43,5 +42,3 @@ Use this skill when asked to map dependencies between modules, packages, service
 - Keep naming consistent with repo terminology.
 - Avoid clutter; split into multiple diagrams if needed.
 - Prefer one diagram per concern (build-time vs runtime).
-
-````

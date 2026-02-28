@@ -1,4 +1,3 @@
-````skill
 ---
 name: mermaid-request-flow-chart
 description: Generate Mermaid request flow charts for inbound requests, service hops, data access, and responses.
@@ -44,5 +43,3 @@ Use this skill when asked to visualize API request flow, control flow, or high-l
 - Keep chart focused on one request/use case.
 - Limit to key steps; avoid low-level implementation noise.
 - Make failure paths explicit and easy to trace.
-
-````

@@ -1,4 +1,3 @@
-````skill
 ---
 name: docs-sync
 description: Check documentation against repository behavior and produce a focused outdated-docs report.
@@ -40,5 +39,3 @@ Use this skill when asked to verify, update, or audit docs for accuracy.
 5. If asked to apply changes, update docs with minimal, surgical edits.
 
 Prefer concise docs that reflect current behavior exactly; avoid adding speculative guidance.
-
-````

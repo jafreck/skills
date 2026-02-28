@@ -1,4 +1,3 @@
-````skill
 ---
 name: adr-writer
 description: Draft Architecture Decision Records (ADRs) from project context with clear status, context, decision, and consequences.
@@ -43,5 +42,3 @@ Use this structure:
 - If uncertainty remains, list open questions.
 
 When requested, also draft a filename using: `docs/adr/NNNN-short-title.md`.
-
-````

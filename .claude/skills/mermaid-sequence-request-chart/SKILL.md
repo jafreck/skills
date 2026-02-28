@@ -1,4 +1,3 @@
-````skill
 ---
 name: mermaid-sequence-request-chart
 description: Generate Mermaid sequence diagrams for request lifecycles across clients, services, and dependencies.
@@ -45,5 +44,3 @@ Use this skill when asked to visualize request timelines, protocol interactions,
 - Keep participant names stable and concise.
 - One primary use case per diagram.
 - Include failure/timeout path when relevant.
-
-````

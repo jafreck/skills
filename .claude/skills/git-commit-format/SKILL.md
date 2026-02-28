@@ -1,4 +1,3 @@
-````skill
 ---
 name: git-commit-format
 description: Enforce commit subject format: type(scope): summary (#issue).
@@ -52,5 +51,3 @@ Invalid:
 - `chore(repo): cleanup.` (trailing period and missing issue)
 
 When creating commits, always format the message to this pattern.
-
-````

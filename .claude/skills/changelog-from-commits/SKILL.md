@@ -1,4 +1,3 @@
-````skill
 ---
 name: changelog-from-commits
 description: Generate changelog sections from commit history using conventional commit types.
@@ -49,5 +48,3 @@ Use this skill when asked to generate release notes, build a changelog, or summa
 6. Keep each bullet concise and user-facing.
 
 If commit messages are inconsistent, still produce the best possible grouped output and note any limitations.
-
-````

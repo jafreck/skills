@@ -1,4 +1,3 @@
-````skill
 ---
 name: architecture-diagram-generator
 description: Generate architecture diagrams from system context using Mermaid, with optional C4-style views.
@@ -50,5 +49,3 @@ If asked for C4, provide:
 - Level 3: Components (only for requested subsystem)
 
 Keep diagrams simple, accurate, and directly tied to known context.
-
-````

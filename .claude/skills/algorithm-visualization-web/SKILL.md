@@ -1,4 +1,3 @@
-````skill
 ---
 name: algorithm-visualization-web
 description: Build a lightweight web visualization for an algorithm with interactive controls and step-by-step playback.
@@ -52,5 +51,3 @@ Use this skill when asked to visualize an algorithm in a browser.
 - Includes short usage instructions and algorithm explanation.
 
 Prefer minimal dependencies unless the user requests a specific framework.
-
-````
