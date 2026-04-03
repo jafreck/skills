@@ -15,19 +15,23 @@ Use this skill when asked to implement a multi-task plan, specification, or impl
 
 Each task goes through three phases:
 
-1. **Implement** — spawn a `general-purpose` subagent to implement the task. Provide it with:
+1. **Implement** — spawn a `general-purpose` subagent (with the same model as the launching agent) to implement the task. Provide it with:
    - The spec document path and the specific task section to implement
    - The working directory (repo root or worktree path)
    - Instructions to study existing code patterns before writing new code
    - Instructions to register new modules in the appropriate mod/index files
    - Instructions to run the build and tests, but NOT commit
 
-2. **Review** — spawn a `code-review` subagent to independently review the implementation. Instruct it to:
+2. **Review** — spawn a `code-review` subagent (with the same model as the launching agent) to independently review the implementation. Instruct it to:
    - Focus on correctness, safety, edge cases, and interaction with existing code
    - Only flag genuine bugs, logic errors, or missing safety checks (not style)
    - Reference the spec to verify completeness
 
-3. **Fix + Commit** — if the reviewer found issues, spawn a `general-purpose` subagent to fix them. Whether the fixer or reviewer found no issues, the final agent commits with a descriptive message and the co-author trailer. If no issues were found, have the implement agent commit directly (or spawn a small commit agent).
+3. **Fix + Commit** — if the reviewer found issues, spawn a `general-purpose` subagent (with the same model as the launching agent) to fix them. Whether the fixer or reviewer found no issues, the final agent commits with a descriptive message and the co-author trailer. If no issues were found, have the implement agent commit directly (or spawn a small commit agent).
+
+## Subagent model
+
+All subagents (implement, review, fix) **must** be launched with the same model as the launching agent. Pass the `model` parameter explicitly to every `task` tool call so that subagents run on the identical model.
 
 ## Parallelization strategy
 
@@ -38,30 +42,37 @@ Each task goes through three phases:
    - After wave 0 completes and is committed, launch all tasks whose dependencies are satisfied in parallel.
    - Continue until all tasks are done.
 
-3. **Isolated worktrees** — for each parallel task, create a git worktree:
+3. **Integration worktree** — before launching any task, create a dedicated integration worktree based off the primary worktree's current branch. This is the single target into which all task commits are cherry-picked:
    ```bash
-   git worktree add ../<repo>-<task-id> <current-branch> -b <task-branch>
+   git worktree add ../<repo>-integration <current-branch> -b integration/<feature>
    ```
-   - Each subagent works in its own worktree, avoiding file conflicts.
-   - The worktree branches from the current HEAD (which includes all completed prior tasks).
 
-4. **Cherry-pick integration** — after a task's commit is finalized in its worktree:
+4. **Task worktrees** — for each parallel task, create a git worktree branching from the integration worktree's HEAD (which includes all completed prior-wave tasks):
    ```bash
-   # From the main worktree
+   # Branch from the integration worktree's branch
+   git worktree add ../<repo>-<task-id> integration/<feature> -b task/<task-id>
+   ```
+   - Each subagent works in its own task worktree, avoiding file conflicts.
+
+5. **Cherry-pick integration** — after a task's commit is finalized in its task worktree, cherry-pick it into the **integration worktree** (not the primary worktree):
+   ```bash
+   # From the integration worktree
+   cd ../<repo>-integration
    git cherry-pick <commit-sha>
    ```
    - Resolve any merge conflicts in shared files (e.g., mod.rs, index files) by combining both sides.
    - After cherry-picking, verify the build with `cargo check`/`npm run build`/etc.
 
-5. **Cleanup** — after all cherry-picks are integrated:
+6. **Cleanup** — after all cherry-picks are integrated into the integration worktree:
    ```bash
    git worktree remove ../<repo>-<task-id>
-   git branch -D <task-branch>
+   git branch -D task/<task-id>
    ```
+   The integration worktree and its branch remain for the user to merge or rebase into their primary branch.
 
 ## Conflict resolution
 
-Cherry-picks into the main branch may conflict on shared registration files (mod.rs, package index, barrel exports). The parent agent resolves these by:
+Cherry-picks into the integration worktree may conflict on shared registration files (mod.rs, package index, barrel exports). The parent agent resolves these by:
 - Keeping all module declarations from both sides
 - Sorting/ordering declarations consistently
 - Running the build to verify resolution correctness
@@ -71,7 +82,7 @@ Cherry-picks into the main branch may conflict on shared registration files (mod
 - Tasks within the same wave run in parallel (isolated worktrees).
 - The review agent for a task launches as soon as its implement agent completes.
 - The fix agent launches as soon as the review agent completes (if issues found).
-- The next wave starts only after all tasks in the current wave are cherry-picked into the main branch.
+- The next wave starts only after all tasks in the current wave are cherry-picked into the integration worktree.
 - The final integration task (if one exists) runs last in its own wave.
 
 ## Validation
@@ -80,6 +91,25 @@ After all tasks are integrated:
 1. Run the full build (`cargo check`, `npm run build`, `go build`, etc.)
 2. Run the full test suite
 3. Verify the final commit log shows one clean commit per task
+
+## Holistic review
+
+After validation passes, launch a final round of review subagents (same model as the launching agent) against the **integration worktree**. These agents review the complete set of changes — not individual tasks — against the original spec.
+
+1. **Diff the integration branch** against the base commit to produce the full combined diff.
+
+2. **Launch parallel `code-review` subagents**, each with a focused mandate. Provide every agent with the spec document, the full diff, and the integration worktree path. Suggested split:
+
+   - **Correctness reviewer** — verify that every task's acceptance criteria from the spec are actually met. Flag any missing functionality, incomplete implementations, or behaviors that diverge from what the spec describes.
+   - **Cross-cutting reviewer** — look for issues that only emerge when all tasks are combined: broken interactions between new modules, inconsistent naming or conventions across tasks, duplicated logic, missing error propagation across boundaries.
+   - **Quality reviewer** — check for regressions in code quality: unused imports/dead code introduced, missing tests for new public APIs, hardcoded values that should be configurable, panics/unwraps in non-test code, missing documentation on public items.
+
+3. **Collect findings** — gather all reviewer reports. Present a consolidated summary to the user, organized by severity:
+   - 🔴 **Blocking** — bugs, spec divergences, or correctness issues that must be fixed
+   - 🟡 **Advisory** — quality concerns or suggestions worth considering
+   - ✅ **Clean** — areas that passed review with no issues
+
+4. **Do NOT auto-fix** — the holistic review is informational. Present findings and let the user decide whether to address them (manually or by invoking another round of implementation).
 
 ## Error handling
 
