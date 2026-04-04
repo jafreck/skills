@@ -5,7 +5,13 @@ description: Implement all tasks from a specification document using parallel su
 
 # Parallel implement from specification
 
-Implement all tasks from a specification/plan document using the implement→review→fix subagent workflow, parallelized across git worktrees where the dependency graph allows.
+Implement **every task** from a specification/plan document using the implement->review->fix subagent workflow, parallelized across git worktrees where the dependency graph allows.
+
+## Completeness requirement
+
+**ALL tasks in the spec MUST be implemented.** This is non-negotiable. Do not skip, defer, or partially implement any task. Before starting, count the total number of tasks. After finishing, verify that every task has a corresponding commit. If a task fails implementation after the fix cycle, report the failure explicitly - do not silently drop it.
+
+At the end of execution, produce a completion table mapping every task ID from the spec to its commit SHA (or failure reason). Any task without a commit SHA is a failure that must be reported to the user.
 
 ## Usage
 
@@ -17,15 +23,17 @@ Each task goes through three phases:
 
 1. **Implement** — spawn a `general-purpose` subagent (with the same model as the launching agent) to implement the task. Provide it with:
    - The spec document path and the specific task section to implement
+   - An explicit instruction: "Implement this task COMPLETELY. Every requirement, edge case, and acceptance criterion described in the task must be addressed. Do not leave TODOs, stubs, or partial implementations."
    - The working directory (repo root or worktree path)
    - Instructions to study existing code patterns before writing new code
    - Instructions to register new modules in the appropriate mod/index files
    - Instructions to run the build and tests, but NOT commit
 
 2. **Review** — spawn a `code-review` subagent (with the same model as the launching agent) to independently review the implementation. Instruct it to:
+   - Verify the task is FULLY implemented - every requirement from the spec section is addressed
    - Focus on correctness, safety, edge cases, and interaction with existing code
-   - Only flag genuine bugs, logic errors, or missing safety checks (not style)
-   - Reference the spec to verify completeness
+   - Only flag genuine bugs, logic errors, missing requirements, or safety checks (not style)
+   - Explicitly call out any spec requirements that were not implemented
 
 3. **Fix + Commit** — if the reviewer found issues, spawn a `general-purpose` subagent (with the same model as the launching agent) to fix them. Whether the fixer or reviewer found no issues, the final agent commits with a descriptive message and the co-author trailer. If no issues were found, have the implement agent commit directly (or spawn a small commit agent).
 
@@ -88,9 +96,10 @@ Cherry-picks into the integration worktree may conflict on shared registration f
 ## Validation
 
 After all tasks are integrated:
-1. Run the full build (`cargo check`, `npm run build`, `go build`, etc.)
-2. Run the full test suite
-3. Verify the final commit log shows one clean commit per task
+1. **Verify completeness** — confirm every task from the spec has a commit in the integration branch. Print the completion table (task ID -> commit SHA). If any task is missing, stop and report.
+2. Run the full build (`cargo check`, `npm run build`, `go build`, etc.)
+3. Run the full test suite
+4. Verify the final commit log shows one clean commit per task
 
 ## Holistic review
 
