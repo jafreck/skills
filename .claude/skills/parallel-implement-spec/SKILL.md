@@ -7,6 +7,10 @@ description: Implement all tasks from a specification document using parallel su
 
 Implement **every task** from a specification/plan document using the implement->review->fix subagent workflow, parallelized across git worktrees where the dependency graph allows.
 
+## ⚠️ CRITICAL: Never modify the primary branch directly
+
+**All cherry-picks go into a dedicated integration worktree/branch — NEVER into main or the primary working branch.** Before any task work begins, you MUST create a new integration worktree and branch. That integration branch is the sole target for all cherry-picks. The primary worktree and its branch must remain untouched throughout the entire process. At the end, the user decides how to merge the integration branch.
+
 ## Completeness requirement
 
 **ALL tasks in the spec MUST be implemented.** This is non-negotiable. Do not skip, defer, or partially implement any task. Before starting, count the total number of tasks. After finishing, verify that every task has a corresponding commit. If a task fails implementation after the fix cycle, report the failure explicitly - do not silently drop it.
@@ -50,10 +54,12 @@ All subagents (implement, review, fix) **must** be launched with the same model 
    - After wave 0 completes and is committed, launch all tasks whose dependencies are satisfied in parallel.
    - Continue until all tasks are done.
 
-3. **Integration worktree** — before launching any task, create a dedicated integration worktree based off the primary worktree's current branch. This is the single target into which all task commits are cherry-picked:
+3. **Integration worktree (MANDATORY FIRST STEP)** — before launching any task, you MUST create a dedicated integration worktree and branch. This is a NEW branch off the primary worktree's current HEAD. This integration worktree is the ONLY target for cherry-picks — never cherry-pick into main or the primary worktree:
    ```bash
-   git worktree add ../<repo>-integration <current-branch> -b integration/<feature>
+   # From the primary worktree — create the integration branch and worktree
+   git worktree add ../<repo>-integration HEAD -b integration/<feature>
    ```
+   After this point, the primary worktree is READ-ONLY. All integration happens in `../<repo>-integration`.
 
 4. **Task worktrees** — for each parallel task, create a git worktree branching from the integration worktree's HEAD (which includes all completed prior-wave tasks):
    ```bash
@@ -62,12 +68,13 @@ All subagents (implement, review, fix) **must** be launched with the same model 
    ```
    - Each subagent works in its own task worktree, avoiding file conflicts.
 
-5. **Cherry-pick integration** — after a task's commit is finalized in its task worktree, cherry-pick it into the **integration worktree** (not the primary worktree):
+5. **Cherry-pick integration** — after a task's commit is finalized in its task worktree, cherry-pick it into the **integration worktree's branch** (NEVER into main or the primary worktree):
    ```bash
-   # From the integration worktree
+   # ALWAYS operate in the integration worktree — not the primary worktree
    cd ../<repo>-integration
    git cherry-pick <commit-sha>
    ```
+   - **Double-check:** if `git branch --show-current` shows `main` or the original branch, STOP — you are in the wrong worktree.
    - Resolve any merge conflicts in shared files (e.g., mod.rs, index files) by combining both sides.
    - After cherry-picking, verify the build with `cargo check`/`npm run build`/etc.
 
@@ -76,7 +83,7 @@ All subagents (implement, review, fix) **must** be launched with the same model 
    git worktree remove ../<repo>-<task-id>
    git branch -D task/<task-id>
    ```
-   The integration worktree and its branch remain for the user to merge or rebase into their primary branch.
+   The integration worktree and its branch (`integration/<feature>`) remain for the user to review, merge, or rebase into their primary branch. **Do NOT merge the integration branch into main automatically.**
 
 ## Conflict resolution
 
